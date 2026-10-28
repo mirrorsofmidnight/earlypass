@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual">
+  <title>Early Pass</title>
+  <link rel="icon" type="image/png" href="assets/Logo.png">
+
+  <style>
+    @font-face {
+      font-family: 'Vamp';
+      src: url('assets/Fonts/Vampire Zone.ttf') format('truetype');
+    }
+
+    @font-face {
+      font-family: 'Happy';
+      src: url('assets/Fonts/HappyHalloween.ttf') format('truetype');
+    }
+
+    :root {
+      --title: "Vamp", sans-serif;
+      --body: "Happy", sans-serif;
+      --night: #120e2b;
+      --plum: #2a1d5e;
+      --lilac: #b9a6ff;
+      --butter: #ffd76a;
+      --mist: #efeaff;
+      --gold: #f7b928;
+      --indigo: #4a35d6;
+      --bg-phone: url("assets/Backgrounds/BG.png");
+      --bg-desktop: url("assets/Backgrounds/BG Desktop.png");
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    html {
+      background: var(--night) var(--bg-phone) center / cover no-repeat;
+    }
+
+    body {
+      overscroll-behavior: none;
+      margin: 0;
+      min-height: 100dvh;
+      font-family: var(--body);
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--mist);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: -15lvh;
+      left: 0;
+      right: 0;
+      height: 130lvh;
+      z-index: -2;
+      pointer-events: none;
+      background-image: var(--bg-phone);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--butter);
+      outline-offset: 3px;
+      border-radius: 8px;
+    }
+
+    .logo {
+      position: fixed;
+      left: 14px;
+      top: calc(10px + env(safe-area-inset-top, 0px));
+      z-index: 10;
+      display: block;
+    }
+
+    .logo img {
+      display: block;
+      height: clamp(50px, 12vw, 100px);
+      width: auto;
+    }
+
+    @media (min-width: 900px) {
+      :root {
+        --bg-phone: var(--bg-desktop);
+      }
+    }
+
+    img, .m-img, .ball, .piece, .oval, .mbtn {
+      -webkit-user-drag: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .wrap {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: calc(120px + env(safe-area-inset-top, 0px)) 16px calc(50px + env(safe-area-inset-bottom, 0px));
+      text-align: center;
+    }
+
+    .pt {
+      margin: 0 0 0px;
+      line-height: 0;
+    }
+
+    .pt img {
+      display: block;
+      width: min(100%, 420px);
+      height: auto;
+      margin: -10px auto 0;
+      transform: translateX(13px);
+    }
+
+    .sub {
+      margin: 1px 0 0;
+      font-size: 14px;
+      color: #d8d0ff;
+    }
+
+    .setup textarea {
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px 14px;
+      border: 3px solid var(--butter);
+      border-radius: 16px;
+      background: rgba(18, 14, 43, .7);
+      color: var(--mist);
+      font: 600 16px/1.5 var(--body);
+      resize: vertical;
+    }
+
+    .setup textarea::placeholder {
+      color: #fff;
+      opacity: .4;
+    }
+
+    .setup textarea:focus-visible {
+      outline: none;
+      border-radius: 16px;
+    }
+
+    .sum {
+      min-height: 1em;
+      margin: 0 0 0;
+      font-size: 13px;
+      color: var(--butter);
+    }
+
+    .go {
+      margin-top: 32px;
+      padding: 13px 24px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--butter);
+      color: var(--night);
+      font: 800 15px var(--title);
+      cursor: pointer;
+      box-shadow: 0 6px 0 #c9962a, 0 12px 20px rgba(0, 0, 0, .3);
+    }
+
+    .go:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #c9962a;
+    }
+
+    .go:disabled {
+      opacity: .6;
+      cursor: default;
+    }
+
+    .note {
+      max-width: 34ch;
+      margin: 16px auto 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d8d0ff;
+      opacity: .8;
+    }
+
+    .machine {
+      --gl: 12%;
+      --gt: 15%;
+      --gw: 76%;
+      --gh: 54%;
+      --bx: 28%;
+      --by: 80%;
+      --bs: 18%;
+      --ex: 58%;
+      --ey: 85%;
+      position: relative;
+      width: min(88vw, 400px);
+      aspect-ratio: 3 / 4;
+      margin: 0 auto;
+      container-type: inline-size;
+      animation: sway 4s ease-in-out infinite;
+    }
+
+    .machine.shake {
+      animation: shake .1s linear infinite;
+    }
+
+    @keyframes sway {
+      0%, 100% { transform: rotate(-.6deg); }
+      50% { transform: rotate(.6deg) translateY(-1%); }
+    }
+
+    @keyframes shake {
+      25% { transform: translate(-1.4%, .4%) rotate(-.9deg); }
+      75% { transform: translate(1.4%, -.4%) rotate(.9deg); }
+    }
+
+    .m-img {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: center / contain no-repeat;
+      transform: scale(1.15);
+      transform-origin: center;
+    }
+
+    .fb {
+      position: absolute;
+    }
+
+    .fb-back {
+      inset: 0;
+      z-index: 0;
+    }
+
+    .fb-body {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 52%;
+      bottom: 2%;
+      border-radius: 12cqw 12cqw 6cqw 6cqw;
+      background: linear-gradient(#e8579a, #a52a6e);
+      box-shadow: inset 0 2cqw 0 rgba(255, 255, 255, .25);
+    }
+
+    .fb-chute {
+      position: absolute;
+      left: 36%;
+      top: 72%;
+      width: 28%;
+      height: 17%;
+      border-radius: 4cqw;
+      background: var(--plum);
+      border: 1cqw solid var(--butter);
+    }
+
+    .fb-globe {
+      left: var(--gl);
+      top: var(--gt);
+      width: var(--gw);
+      height: var(--gh);
+      z-index: 2;
+      border-radius: 50%;
+      border: 1.4cqw solid rgba(255, 255, 255, .6);
+      background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .35), rgba(185, 166, 255, .12) 60%);
+      pointer-events: none;
+    }
+
+    .mbtn {
+      position: absolute;
+      left: var(--bx);
+      top: var(--by);
+      width: var(--bs);
+      aspect-ratio: 1;
+      translate: -50% -50%;
+      z-index: 4;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      background: radial-gradient(circle at 35% 30%, #ffb3d6, #ff4fa3 55%, #c2185b);
+      color: #fff;
+      font-family: var(--title);
+      font-size: 3.6cqw;
+      line-height: 1;
+      box-shadow: 0 1.6cqw 0 #8e1244, 0 3cqw 5cqw rgba(0, 0, 0, .4), inset 0 .8cqw 1cqw rgba(255, 255, 255, .5);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    .mbtn span {
+      pointer-events: none;
+    }
+
+    .mbtn:active:not(:disabled) {
+      translate: -50% calc(-50% + 1cqw);
+      box-shadow: 0 .5cqw 0 #8e1244, 0 1cqw 2cqw rgba(0, 0, 0, .4), inset 0 .8cqw 1cqw rgba(255, 255, 255, .5);
+    }
+
+    .mbtn:disabled {
+      animation: none;
+      filter: grayscale(.7);
+      opacity: .7;
+      cursor: default;
+    }
+
+    .mbtn.has-img {
+      background-color: transparent;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: none;
+      animation: none;
+    }
+
+    .mbtn.has-img:active:not(:disabled) {
+      box-shadow: none;
+    }
+
+    .mbtn.has-img span {
+      display: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 1.6cqw 0 #8e1244, 0 3cqw 5cqw rgba(0, 0, 0, .4), inset 0 .8cqw 1cqw rgba(255, 255, 255, .5), 0 0 0 0 rgba(255, 79, 163, .5);
+      }
+      50% {
+        box-shadow: 0 1.6cqw 0 #8e1244, 0 3cqw 5cqw rgba(0, 0, 0, .4), inset 0 .8cqw 1cqw rgba(255, 255, 255, .5), 0 0 0 2.4cqw rgba(255, 79, 163, 0);
+      }
+    }
+
+    .balls {
+      position: absolute;
+      left: var(--gl);
+      top: var(--gt);
+      width: var(--gw);
+      height: var(--gh);
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .ball {
+      position: absolute;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      width: var(--s, 14cqw);
+      height: var(--s, 14cqw);
+      margin: calc(var(--s, 14cqw) / -2) 0 0 calc(var(--s, 14cqw) / -2);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .6), transparent 42%), var(--c);
+      box-shadow: inset -2cqw -2cqw 3cqw rgba(0, 0, 0, .25);
+      rotate: var(--r, 0deg);
+    }
+
+    .ball::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 48%;
+      height: 3%;
+      background: rgba(0, 0, 0, .22);
+    }
+
+    .has-img {
+      background-color: transparent;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: none;
+    }
+
+    .has-img::after {
+      display: none;
+    }
+
+    @keyframes bob {
+      to { transform: translate(var(--dx), var(--dy)); }
+    }
+
+    @keyframes jolt {
+      from { transform: translate(-12%, 4%); }
+      to { transform: translate(12%, -14%); }
+    }
+
+    .machine.shake .ball:not(.dropball) {
+      animation: jolt .2s ease-in-out infinite alternate;
+    }
+
+    .ball.dropball {
+      --x: 50;
+      --y: 50;
+      left: 50%;
+      top: 36%;
+      width: 15cqw;
+      height: 15cqw;
+      margin: -7.5cqw 0 0 -7.5cqw;
+      z-index: 1;
+      animation: fallIn .9s cubic-bezier(.4, 0, .6, 1) both;
+    }
+
+    .ball.dropball.out {
+      left: var(--ex);
+      top: var(--ey);
+      z-index: 3;
+      animation: slide .8s cubic-bezier(.25, .8, .4, 1) both;
+    }
+
+    @keyframes fallIn {
+      0% { top: 30%; opacity: 0; }
+      15% { opacity: 1; }
+      100% { top: calc(var(--gt) + var(--gh) - 6%); opacity: 1; }
+    }
+
+    @keyframes slide {
+      0% { transform: translate(-10cqw, -8cqw) rotate(-240deg) scale(.7); opacity: 0; }
+      20% { opacity: 1; }
+      68% { transform: translate(1.2cqw, 1.2cqw) rotate(12deg) scale(1.15); }
+      84% { transform: translate(-.5cqw, 0) rotate(-4deg) scale(1.15); }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+
+    @keyframes pop {
+      0% { transform: translateY(-45%) scale(.5); opacity: 0; }
+      60% { transform: translateY(8%) scale(1.2); opacity: 1; }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+
+    .remain {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: #d8d0ff;
+    }
+
+    .reset {
+      margin-top: 14px;
+      padding: 6px 14px;
+      border: 0;
+      background: none;
+      color: #d8d0ff;
+      font: 600 12px var(--body);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    body.is-play {
+      overflow: hidden;
+      height: 100dvh;
+    }
+
+    #play.wrap {
+      padding-top: calc(70px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+
+    #play .pt img {
+      width: min(100%, 420px);
+      max-width: 100%;
+      margin: 0 auto;
+      transform: translateX(13px);
+    }
+
+    #play .machine {
+      margin-top: -20px;
+      width: min(88vw, 400px, calc((86dvh - 215px) * .75));
+    }
+
+    #play .reset {
+      margin-top: 8px;
+    }
+
+    #play .sub {
+      margin-top: 22px;
+    }
+
+    .res {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      overflow-y: auto;
+      background: rgba(18, 14, 43, .92);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .res.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .res-in {
+      width: min(86vw, 380px, 58vh);
+      container-type: inline-size;
+      text-align: center;
+    }
+
+    .mp {
+      margin: 0;
+      line-height: 0;
+      transform: rotate(-3deg);
+    }
+
+    .mp img {
+      display: block;
+      width: 75%;
+      height: auto;
+      margin: 0 auto;
+    }
+
+    .cap {
+      position: relative;
+      width: 100cqw;
+      height: 90cqw;
+      margin: -5cqw auto;
+    }
+
+    .piece {
+      position: absolute;
+      left: 19cqw;
+      top: 26cqw;
+      width: 62cqw;
+      height: 57.4cqw;
+      border-radius: 50%;
+      background-color: var(--c);
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .piece.has-img {
+      background-color: transparent;
+    }
+
+    .lid { z-index: 3; }
+    .base { z-index: 1; }
+
+    .cap:not(.split) .lid { clip-path: inset(0 0 49% 0); }
+    .cap:not(.split) .base { clip-path: inset(51% 0 0 0); }
+
+    .cap.split .piece {
+      border-radius: 0;
+      background-color: transparent;
+    }
+
+    .cap.split .lid { left: 30cqw; top: 20.6cqw; width: 40cqw; height: 26.5cqw; }
+    .cap.split .base { left: 28.2cqw; top: 47.1cqw; width: 43.6cqw; height: 22.3cqw; }
+
+    .oval {
+      position: absolute;
+      left: 50%;
+      top: 40cqw;
+      z-index: 2;
+      width: 50cqw;
+      aspect-ratio: 2.15 / 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1.4cqw solid #fff3c8;
+      background: radial-gradient(ellipse at 40% 25%, #fff3b0, var(--gold) 70%);
+      box-shadow: 0 2cqw 0 rgba(42, 29, 94, .4);
+      transform: translate(-50%, -50%) scale(0);
+    }
+
+    .oval.has-img {
+      border: 0;
+      box-shadow: none;
+      background-color: transparent;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .oval b {
+      display: block;
+      padding-left: .12em;
+      text-align: center;
+      overflow-wrap: anywhere;
+      font: 800 40px/1.05 var(--body);
+      letter-spacing: .12em;
+      color: #2152e0;
+      text-shadow: .5cqw .5cqw 0 #9bb8ff;
+      transform: translate(-2cqw, -2.3cqw);
+    }
+
+    .close {
+      margin-top: 8cqw;
+      padding: 3cqw 9cqw;
+      border: 0;
+      border-radius: 999px;
+      background: var(--butter);
+      color: var(--night);
+      font-family: var(--body);
+      font-size: 7cqw;
+      font-weight: 800;
+      cursor: pointer;
+      visibility: hidden;
+      opacity: 0;
+      box-shadow: 0 1.4cqw 0 #c9962a;
+    }
+
+    .res.show .lid {
+      animation: lidOpen 1.1s .4s cubic-bezier(.3, 1.2, .5, 1) both;
+    }
+
+    .res.show .base {
+      animation: baseDrop 1.1s .4s cubic-bezier(.3, 1.2, .5, 1) both;
+    }
+
+    .res.show .oval {
+      animation: ovalIn .5s 1.1s cubic-bezier(.3, 1.6, .5, 1) both;
+    }
+
+    .res.show .close {
+      visibility: visible;
+      animation: fade .4s 1.9s both;
+    }
+
+    @keyframes lidOpen {
+      0% { transform: none; }
+      100% { transform: translate(-29cqw, 34.15cqw) rotate(-150deg); }
+    }
+
+    @keyframes baseDrop {
+      0% { transform: none; }
+      100% { transform: translate(29cqw, 9.75cqw) rotate(-30deg); }
+    }
+
+    @keyframes ovalIn {
+      to { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes fade {
+      to { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .machine, .mbtn, .ball:not(.dropball) {
+        animation: none !important;
+      }
+
+      .res.show .lid {
+        animation: none;
+        transform: translate(-29cqw, 34.15cqw) rotate(-150deg);
+      }
+
+      .res.show .base {
+        animation: none;
+        transform: translate(29cqw, 9.75cqw) rotate(-30deg);
+      }
+
+      .res.show .oval {
+        animation: none;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .res.show .close {
+        animation: none;
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="logo">
+    <img src="assets/Logo.png" alt="Mirrors of Midnight">
+  </div>
+
+  <section class="wrap setup" id="setup">
+    <h1 class="pt"><img src="assets/Texts/Fate Spinner.png" alt="Fate Spinner"></h1>
+
+    <textarea id="list" rows="5" spellcheck="false" placeholder="Type/paste entries here"></textarea>
+
+    <p class="sum" id="sum"></p>
+
+    <p class="sub">Fill the machine, Doll. And Mother will do the rest</p>
+
+    <button class="go" id="load" type="button" disabled>Load The Ball</button>
+
+    <p class="note">
+      2026. Mirrors of Midnight. All Rights Reserved.
+    </p>
+  </section>
+
+  <main class="wrap" id="play" hidden>
+    <h1 class="pt"><img src="assets/Texts/Fate Spinner.png" alt="Fate Spinner"></h1>
+
+    <div class="machine" id="machine">
+      <div class="fb fb-back">
+        <span class="fb-body"></span>
+        <span class="fb-chute"></span>
+      </div>
+
+      <div class="balls" id="balls"></div>
+      <div class="fb fb-globe"></div>
+      <div class="m-img" id="mimg"></div>
+
+      <button class="mbtn" id="go" type="button" aria-label="Start">
+        <span>Start</span>
+      </button>
+    </div>
+
+    <p class="sub">Press the button and let Mother pick a ball.</p>
+    <p class="remain" id="left"></p>
+
+    <button class="reset" id="reset" type="button">Change list</button>
+  </main>
+
+  <section class="res" id="res" aria-live="polite">
+    <div class="res-in">
+      <h2 class="mp">
+        <img src="assets/Texts/Mmh.png" alt="Mother Reaches For…">
+      </h2>
+
+      <div class="cap" id="cap">
+        <div class="piece base" id="rbase"></div>
+        <div class="oval" id="oval"><b id="code"></b></div>
+        <div class="piece lid" id="rlid"></div>
+      </div>
+
+      <button class="close" id="close" type="button">CLOSE</button>
+    </div>
+  </section>
+
+  <script>
+    const ASSETS = {
+      machine: "assets/Slot Machine Doang.png",
+      oval: "assets/Shape.png",
+      start: "assets/Tombol 1.png"
+    };
+
+    const LID = "assets/Balls/Bola Atas.png";
+
+    const BALLS = [
+      { c: "#ff4fa3", img: "assets/Balls/Bola Pink.png", bot: "assets/Balls/Bawah Pink.png" },
+      { c: "#4f8cff", img: "assets/Balls/Bola Biru.png", bot: "assets/Balls/Bawah Biru.png" },
+      { c: "#ffd23a", img: "assets/Balls/Bola Kuning.png", bot: "assets/Balls/Bawah Kuning.png" },
+      { c: "#aa82ff", img: "assets/Balls/Bola Ungu.png", bot: "assets/Balls/Bawah Ungu.png" },
+      { c: "#b6e03a", img: "assets/Balls/Bola Ijo.png", bot: "assets/Balls/Bawah Ijo.png" },
+      { c: "#ff7a36", img: "assets/Balls/Bola Oren.png", bot: "assets/Balls/Bawah Oren.png" }
+    ];
+
+    const MAXV = 60;
+
+    const $ = id => document.getElementById(id);
+    const K = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.3 : 1;
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms * K));
+
+    function rnd(n) {
+      const a = new Uint32Array(1);
+      const limit = Math.floor(2**32 / n) * n;
+      let x;
+      do {
+        crypto.getRandomValues(a);
+        x = a[0];
+      } while (x >= limit);
+      return x % n;
+    }
+
+    function loadImg(el, src, onOk) {
+      if (!el) return;
+      const im = new Image();
+      im.onload = () => {
+        el.style.backgroundImage = 'url("' + src + '")';
+        el.classList.add("has-img");
+        if (onOk) onOk(im);
+      };
+      im.src = src;
+    }
+
+    function fitCode(el, box) {
+      const maxW = box.clientWidth * 0.5;
+      const maxH = box.clientHeight * 0.38;
+      let size = box.clientHeight * 0.3;
+
+      el.style.maxWidth = maxW + "px";
+      el.style.fontSize = size + "px";
+
+      while (size > 6 && (el.scrollWidth > maxW + 1 || el.offsetHeight > maxH)) {
+        size -= 1;
+        el.style.fontSize = size + "px";
+      }
+    }
+
+    function clearImg(el) {
+      el.classList.remove("has-img");
+      el.style.backgroundImage = "";
+    }
+
+    const machine = $("machine");
+    const go = $("go");
+    const res = $("res");
+    const rLid = $("rlid");
+    const rBase = $("rbase");
+    const oval = $("oval");
+    const ta = $("list");
+    const sum = $("sum");
+    const loadBtn = $("load");
+
+    let pool = [];
+    let parsed = { valid: [], dup: 0 };
+    let busy = false;
+    let shown = 0;
+
+    loadImg($("mimg"), ASSETS.machine, () => {
+      document.querySelectorAll(".fb").forEach(e => { e.hidden = true; });
+    });
+
+    loadImg(oval, ASSETS.oval, im => {
+      oval.style.aspectRatio = im.naturalWidth + " / " + im.naturalHeight;
+    });
+    loadImg(go, ASSETS.start);
+
+    function parseList(text) {
+      const valid = [];
+      const seen = new Set();
+      let dup = 0;
+
+      text
+        .split(/\r?\n/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .forEach(entry => {
+          const key = entry.toLowerCase();
+          if (seen.has(key)) {
+            dup++;
+          } else {
+            seen.add(key);
+            valid.push(entry);
+          }
+        });
+
+      return { valid, dup };
+    }
+
+    function check() {
+      parsed = parseList(ta.value);
+      const n = parsed.valid.length;
+
+      sum.textContent = ta.value.trim()
+        ? n + " entr" + (n === 1 ? "y" : "ies") + (parsed.dup ? " · " + parsed.dup + " duplicate removed" : "")
+        : "";
+
+      loadBtn.disabled = !n;
+    }
+
+    ta.addEventListener("input", check);
+
+    loadBtn.addEventListener("click", () => {
+      pool = parsed.valid.slice();
+
+      ta.value = "";
+      check();
+
+      $("setup").hidden = true;
+      $("play").hidden = false;
+      document.body.classList.add("is-play");
+      scrollTo(0, 0);
+
+      buildBalls(pool.length);
+      update();
+    });
+
+    $("reset").addEventListener("click", () => {
+      $("balls").textContent = "";
+      pool = [];
+      shown = 0;
+      res.classList.remove("show");
+
+      $("play").hidden = true;
+      $("setup").hidden = false;
+      document.body.classList.remove("is-play");
+    });
+
+    function buildBalls(total) {
+      const box = $("balls");
+      const cw = machine.clientWidth || 1;
+
+      const W = box.clientWidth / cw * 100 || 76;
+      const H = box.clientHeight / cw * 100 || 72;
+
+      box.textContent = "";
+      shown = 0;
+      if (!total) return;
+
+      const n = Math.min(total, MAXV);
+      const s = 7;
+      const D = s * 0.97;
+      const rf = () => rnd(1000) / 1000;
+
+      const INSET = { l: 5.5, r: 5, t: 1, b: 1.5 };
+
+      const x0 = INSET.l + s / 2;
+      const x1 = W - INSET.r - s / 2;
+      const yMin = INSET.t + s / 2;
+      const yMax = H - INSET.b - s / 2;
+
+      const spots = [];
+
+      const fits = (x, y) => {
+        if (x < x0 - 1e-6 || x > x1 + 1e-6 || y > yMax + 1e-6 || y < yMin) return false;
+        for (const q of spots) {
+          if ((q.x - x) ** 2 + (q.y - y) ** 2 < D * D * 0.98) return false;
+        }
+        return true;
+      };
+
+      for (let i = 0; i < n; i++) {
+        const cand = [];
+        const add = (x, y) => { if (fits(x, y)) cand.push({ x, y }); };
+
+        add(x0, yMax);
+        add(x1, yMax);
+        for (let k = 0; k < 6; k++) add(x0 + rf() * (x1 - x0), yMax);
+
+        spots.forEach((q, qi) => {
+          const dy = yMax - q.y;
+          if (dy < D) {
+            const h = Math.sqrt(D * D - dy * dy);
+            add(q.x - h, yMax);
+            add(q.x + h, yMax);
+          }
+
+          for (const wx of [x0, x1]) {
+            const dx = Math.abs(wx - q.x);
+            if (dx < D) add(wx, q.y - Math.sqrt(D * D - dx * dx));
+          }
+
+          for (let j = 0; j < qi; j++) {
+            const p = spots[j];
+            const dx = p.x - q.x, dy2 = p.y - q.y;
+            const dist = Math.hypot(dx, dy2);
+            if (dist < 2 * D && dist > 1e-6) {
+              const h = Math.sqrt(D * D - dist * dist / 4);
+              const mx = (q.x + p.x) / 2, my = (q.y + p.y) / 2;
+              const ux = -dy2 / dist, uy = dx / dist;
+              add(mx + ux * h, my + uy * h);
+              add(mx - ux * h, my - uy * h);
+            }
+          }
+        });
+
+        if (!cand.length) break;
+
+        let low = -Infinity;
+        for (const c of cand) low = Math.max(low, c.y);
+        const pool = cand.filter(c => c.y >= low - D * 0.35);
+        spots.push(pool[Math.floor(rf() * pool.length)]);
+      }
+
+      spots.sort((a, b) => a.y - b.y);
+      shown = spots.length;
+
+      spots.forEach(p => {
+        const data = BALLS[rnd(BALLS.length)];
+        const ball = document.createElement("span");
+
+        ball.className = "ball";
+        ball.dataset.y = p.y.toFixed(2);
+        ball.style.cssText =
+          "--x:" + (p.x / W * 100).toFixed(2) + ";" +
+          "--y:" + (p.y / H * 100).toFixed(2) + ";" +
+          "--s:" + s + "cqw;" +
+          "--c:" + data.c + ";" +
+          "--r:" + rnd(360) + "deg";
+
+        box.append(ball);
+        loadImg(ball, data.img);
+      });
+    }
+
+    function takeBall() {
+      const box = $("balls");
+      const keep = Math.min(pool.length, shown);
+
+      while (box.children.length > keep) {
+        let top = null;
+        for (const b of box.children) {
+          if (!top || parseFloat(b.dataset.y) < parseFloat(top.dataset.y)) top = b;
+        }
+        top.remove();
+      }
+    }
+
+    function update() {
+      const n = pool.length;
+      $("left").textContent = n ? n + " ball" + (n > 1 ? "s" : "") + " left" : "All balls have been picked.";
+      go.disabled = busy || !n;
+    }
+
+    async function draw() {
+      if (busy || !pool.length) return;
+
+      busy = true;
+      update();
+      res.classList.remove("show");
+
+      const result = pool.splice(rnd(pool.length), 1)[0];
+      const ballData = BALLS[rnd(BALLS.length)];
+
+      machine.classList.add("shake");
+      await sleep(1700);
+      machine.classList.remove("shake");
+
+      const drop = document.createElement("span");
+      drop.className = "ball dropball out";
+      drop.style.setProperty("--c", ballData.c);
+      loadImg(drop, ballData.img);
+
+      machine.append(drop);
+      takeBall();
+
+      await sleep(800);
+      drop.remove();
+
+      const split = !!ballData.bot;
+      $("cap").classList.toggle("split", split);
+
+      [rLid, rBase].forEach(p => {
+        clearImg(p);
+        p.style.setProperty("--c", ballData.c);
+      });
+
+      loadImg(rLid, split ? LID : ballData.img);
+      loadImg(rBase, split ? ballData.bot : ballData.img);
+
+      const codeEl = $("code");
+      const len = result.length;
+      const ls = len > 8 ? "0" : ".12em";
+
+      codeEl.textContent = result;
+      codeEl.style.letterSpacing = ls;
+      codeEl.style.paddingLeft = ls;
+
+      await document.fonts.ready;
+      fitCode(codeEl, oval);
+
+      void res.offsetWidth;
+      res.classList.add("show");
+
+      busy = false;
+      update();
+    }
+
+    go.addEventListener("click", draw);
+
+    $("close").addEventListener("click", () => {
+      res.classList.remove("show");
+    });
+
+    document.addEventListener("contextmenu", e => {
+      if (e.target.closest("textarea")) return;
+      e.preventDefault();
+    });
+
+    document.addEventListener("dragstart", e => {
+      if (e.target.tagName === "IMG") e.preventDefault();
+    });
+
+    check();
+    update();
+  </script>
+</body>
+
+</html>
